@@ -1,0 +1,4 @@
+UTIF.js — Photopea — MIT License (see UTIF.LICENSE.txt).
+Source: https://github.com/photopea/UTIF.js
+Upstream commit: d5f4afefa9bde9f5ac1ee9782983088f6ffbf5e9
+UTIF.js is included unchanged. It includes its TIFF decompression and JPEG decoder.
