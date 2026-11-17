@@ -1,0 +1,28 @@
+:root { --hlp-ink: #233c4b; --hlp-paper: #f6f4ee; --hlp-accent: #345e67; }
+#hlp-toolbar { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; padding: .65rem 1.4rem; background: var(--hlp-ink); color: white; font: 14px/1.4 system-ui, sans-serif; }
+#hlp-toolbar strong { font-size: 14px; color: white; }
+#hlp-toolbar .hlp-status { flex: 1; min-width: 180px; color: #dbe8e9; }
+#hlp-toolbar a, #hlp-toolbar button { color: white; font: inherit; border: 1px solid #8ba1ac; border-radius: 5px; padding: .4rem .65rem; background: transparent; text-decoration: none; cursor: pointer; }
+#hlp-toolbar .hlp-publish { background: #e0eae4; border-color: #e0eae4; color: #163c35; font-weight: 650; }
+#hlp-toolbar button:disabled { opacity: .55; cursor: default; }
+#hlp-toolbar [data-dirty="true"] { color: #ffdb92; }
+#hlp-message { background: #fff0d4; color: #543a16; padding: .8rem 1.4rem; font: 14px/1.5 system-ui, sans-serif; overflow-wrap: anywhere; }
+.hlp-loading { padding: 3rem; font: 18px/1.6 system-ui, sans-serif; }
+.hlp-login { max-width: 580px; margin: 6vh auto; padding: 2rem; background: white; border: 1px solid #d9dfdc; border-radius: 10px; color: var(--hlp-ink); font: 16px/1.6 system-ui, sans-serif; }
+.hlp-login h1, #hlp-dialog h2 { margin: 0 0 .7rem; font: 600 28px/1.25 Georgia, serif; }
+.hlp-login label { display: block; margin-top: 1rem; font-weight: 600; }
+.hlp-login input { box-sizing: border-box; width: 100%; padding: .75rem; margin: .3rem 0 1rem; border: 1px solid #9caeb2; border-radius: 5px; font: inherit; }
+.hlp-login button, #hlp-dialog button { background: var(--hlp-accent); color: white; border: 0; border-radius: 5px; padding: .7rem 1rem; cursor: pointer; font: inherit; }
+.hlp-login button:disabled { opacity: .6; }
+.hlp-login a { color: var(--hlp-accent); }
+.hlp-login small { display: block; font-size: 13px; }
+#hlp-dialog { box-sizing: border-box; max-width: 580px; width: calc(100% - 2rem); border: 1px solid #adbfbe; border-radius: 10px; padding: 1.7rem; color: var(--hlp-ink); font: 15px/1.6 system-ui, sans-serif; }
+#hlp-dialog::backdrop { background: #132a36aa; }
+#hlp-dialog .hlp-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.2rem; }
+#hlp-dialog .hlp-secondary { background: #e9efeb; color: var(--hlp-ink); }
+#hlp-dialog code { overflow-wrap: anywhere; }
+@media(max-width: 650px) {
+  #hlp-toolbar { padding: .7rem; gap: .5rem; }
+  #hlp-toolbar .hlp-status { flex-basis: 100%; order: 2; }
+  .hlp-login { margin: 1rem; padding: 1.3rem; }
+}
