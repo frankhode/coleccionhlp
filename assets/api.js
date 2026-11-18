@@ -113,6 +113,14 @@ export class BrowserAPI {
         }
         if (method === 'POST' && options.body instanceof FormData) {
           const sys = options.body.get('sys')?.trim();
+          const analyticId = options.body.get('analyticId')?.trim();
+          const findAnalytic = state => (state.data.analyticRecords || []).find(record => record.id === analyticId);
+          const validateAnalytic = state => {
+            const analytic = findAnalytic(state);
+            if (!analytic || analytic.parentSys !== sys || analytic.status === 'discarded') throw new Error('La analítica no existe o no pertenece al registro seleccionado.');
+            return analytic;
+          };
+          if (analyticId) validateAnalytic(value.state);
           const files = [...options.body.getAll('files'), ...options.body.getAll('files[]')];
           if (!sys || !files.length || files.length > 20) throw new Error('Elegí un registro y entre 1 y 20 imágenes.');
           // Convert the complete batch before changing metadata; a failure leaves no partial batch.
@@ -120,6 +128,8 @@ export class BrowserAPI {
           for (const file of files) converted.push({ file, ...await thumbnail(file) });
           const createdIds = [];
           await this.workspace.mutate(next => {
+            // Revalidate after conversion, in case another edit changed the target.
+            const analytic = analyticId ? validateAnalytic(next.state) : null;
             const used = new Set(Object.values(next.assets).map(a => a.path.toLocaleLowerCase('es')));
             let order = Math.max(-1, ...Object.values(next.assets).filter(a => a.sys === sys).map(a => a.sortOrder));
             for (const { file, blob, width, height } of converted) {
@@ -129,8 +139,15 @@ export class BrowserAPI {
               next.assets[id] = { id, sys, originalName: file.name, originalPath: file.webkitRelativePath?.split('/').slice(1).join('/') || '', path, contentType: 'image/webp', sizeBytes: blob.size, originalSizeBytes: file.size, width, height, sortOrder: ++order, label: '', pairId: null, face: '', createdAt: new Date().toISOString(), createdBy: this.actor.name };
               createdIds.push(id);
             }
+            if (analytic) {
+              next.history.push({ id: crypto.randomUUID(), action: `Carga de imágenes en analítica: ${analytic.title}`, snapshot: copy(next.state.data), created_at: new Date().toISOString(), created_by: this.actor.name });
+              next.history = next.history.slice(-12);
+              analytic.digitalAssetIds = [...new Set([...(analytic.digitalAssetIds || []), ...createdIds])];
+              analytic.updatedAt = new Date().toISOString();
+              next.state = { ...next.state, version: next.state.version + 1, updatedAt: analytic.updatedAt, updatedBy: this.actor.name };
+            }
           });
-          return json({ assets: await Promise.all(createdIds.map(id => this.asset(this.value.assets[id]))) }, 201);
+          return json({ assets: await Promise.all(createdIds.map(id => this.asset(this.value.assets[id]))), ...(analyticId ? { analytic: findAnalytic(this.value.state), version: this.value.state.version } : {}) }, 201);
         }
         if (method === 'DELETE' && id) {
           await this.workspace.mutate(next => {
@@ -170,3 +187,4 @@ export class BrowserAPI {
     } catch (error) { return json({ error: error.message }, error.status || 400); }
   }
 }
+
