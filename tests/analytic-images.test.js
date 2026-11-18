@@ -82,7 +82,7 @@ function ui(api, workspace, form) {
     pl() {}, ee(value) { context.Zt = value; }, rt() {}, me() {},
     ma(fn) { images = fn(images); }, hl() {}, Gn(fn) { summary = fn(summary); },
     g() {}, E(value) { version = value; }, _e(fn) { form = fn(form); }, Yg: async () => {},
-    cn() {}, Ha() {}, Dy: () => [], bl() {}, is() {}, ar() {},
+    cn() {}, setReviewOptions() {}, Dy: () => [],
   });
   vm.runInContext(`${controller};globalThis.upload=Yo`, context);
   return { upload: context.upload, get images() { return images; }, get form() { return form; }, get version() { return version; } };

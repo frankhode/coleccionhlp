@@ -41,6 +41,19 @@ export class GitHub {
 
   async head() { return (await this.request(`/git/ref/heads/${config.branch}`)).object.sha; }
 
+  async sameCatalog(base, head) {
+    // Compare directory identities, including every published image, without downloading them.
+    const contents = await Promise.all([base, head].map(async sha => {
+      const commit = await this.request(`/git/commits/${sha}`);
+      const tree = await this.request(`/git/trees/${commit.tree.sha}`);
+      if (tree.truncated || !Array.isArray(tree.tree)) throw new Error('No se pudo comprobar el catálogo.');
+      const folders = Object.fromEntries(tree.tree.map(entry => [entry.path, entry]));
+      if (folders.data?.type !== 'tree') throw new Error('Faltan los datos del catálogo.');
+      return [folders.data.sha, folders.images?.sha];
+    }));
+    return contents[0].every((sha, index) => sha === contents[1][index]);
+  }
+
   async readAt(path, sha) {
     return this.request(`/contents/${path}?ref=${encodeURIComponent(sha)}`, { raw: true });
   }
@@ -78,3 +91,4 @@ export class GitHub {
     return createdCommit.sha;
   }
 }
+

@@ -199,6 +199,9 @@ function login() {
       let saved = await database.read();
       if (saved?.dirty) {
         error.textContent = '';
+        if (saved.baseCommit !== head && await github.sameCatalog(saved.baseCommit, head).catch(() => false)) {
+          saved = { ...saved, baseCommit: head };
+        }
         saved = await chooseDraft(saved, head);
       } else saved = null;
       const published = saved || createWorkspace(...await (async () => { const p = await github.load(head); return [p.state, p.assets, head]; })());
@@ -322,3 +325,4 @@ window.addEventListener('beforeunload', event => {
 renderToolbar();
 if (admin) login();
 else loadPublic().catch(error => { root.replaceChildren(paragraph(error.message)); say(error.message); });
+

@@ -32,8 +32,46 @@ export class BrowserAPI {
 
   unpair(value, pairId) {
     if (pairId) for (const asset of Object.values(value.assets)) {
-      if (asset.pairId === pairId) { asset.pairId = null; asset.face = ''; }
+      if (asset.pairId === pairId) { asset.pairId = null; asset.face = ''; delete asset.groupOrder; }
     }
+  }
+
+  detach(value, asset) {
+    if (asset.face === 'other-detail') {
+      const members = Object.values(value.assets).filter(item => item.pairId === asset.pairId);
+      if (members.length > 2) {
+        asset.pairId = null;
+        asset.face = '';
+        delete asset.groupOrder;
+        return;
+      }
+    }
+    this.unpair(value, asset.pairId);
+  }
+
+  async saveGroups(sys, groups) {
+    if (!sys || !Array.isArray(groups) || !groups.length) throw new Error('Elegí las imágenes de la pieza.');
+    await this.workspace.mutate(next => {
+      for (const { kind, ids } of groups) {
+        if (!Array.isArray(ids) || !['pairs', 'stereo', 'other'].includes(kind) ||
+            ids.length < 2 || (kind === 'pairs' && ids.length !== 2) || (kind === 'stereo' && ids.length !== 3)) {
+          throw new Error('La cantidad de imágenes no corresponde al grupo.');
+        }
+        const groupId = crypto.randomUUID();
+        ids.forEach((id, index) => {
+          const asset = next.assets[id];
+          if (!asset || asset.sys !== sys || asset.pairId) throw new Error('Elegí imágenes sueltas y diferentes del mismo registro.');
+          asset.pairId = groupId;
+          if (kind === 'other') {
+            asset.face = index === 0 ? 'other-front' : 'other-detail';
+            asset.groupOrder = index;
+          } else {
+            asset.face = (kind === 'pairs' ? ['front', 'back'] : ['stereo-full', 'stereo-left', 'stereo-right'])[index];
+          }
+        });
+      }
+    });
+    return this.list(sys);
   }
 
   async handle(url, options = {}) {
@@ -102,7 +140,7 @@ export class BrowserAPI {
             for (const asset of Object.values(value.assets).sort((a, b) => a.sortOrder - b.sortOrder)) {
               const summary = summaries[asset.sys] ||= { count: 0, objectCount: 0, previews: [] };
               summary.count++;
-              if (!['back', 'stereo-left', 'stereo-right'].includes(asset.face)) {
+              if (!['back', 'stereo-left', 'stereo-right', 'other-detail'].includes(asset.face)) {
                 summary.objectCount++;
                 if (summary.previews.length < 3) summary.previews.push(await this.asset(asset));
               }
@@ -151,13 +189,14 @@ export class BrowserAPI {
         }
         if (method === 'DELETE' && id) {
           await this.workspace.mutate(next => {
-            this.unpair(next, next.assets[id].pairId);
+            this.detach(next, next.assets[id]);
             delete next.files[next.assets[id].path];
             delete next.assets[id];
             for (const analytic of next.state.data.analyticRecords || []) analytic.digitalAssetIds = (analytic.digitalAssetIds || []).filter(a => a !== id);
           });
           return json({ ok: true });
         }
+        if (method === 'PATCH' && !id) return json({ assets: await this.saveGroups(body.sys, body.groups) });
         if (method === 'PATCH' && id) {
           await this.workspace.mutate(next => {
             const asset = next.assets[id];
@@ -166,7 +205,7 @@ export class BrowserAPI {
               const ids = body.pairWith ? [id, body.pairWith] : [id, ...body.stereoWith];
               const faces = body.pairWith ? ['front', 'back'] : ['stereo-full', 'stereo-left', 'stereo-right'];
               if (new Set(ids).size !== faces.length || ids.length !== faces.length || ids.some(key => !next.assets[key] || next.assets[key].sys !== asset.sys)) throw new Error('Elegí imágenes diferentes del mismo registro.');
-              for (const key of ids) this.unpair(next, next.assets[key].pairId);
+              for (const key of ids) this.detach(next, next.assets[key]);
               const group = crypto.randomUUID();
               ids.forEach((key, i) => { next.assets[key].pairId = group; next.assets[key].face = faces[i]; });
               return;
@@ -174,7 +213,7 @@ export class BrowserAPI {
             const sys = body.sys?.trim();
             if (!sys) throw new Error('Elegí el registro de destino.');
             if (sys !== asset.sys) {
-              this.unpair(next, asset.pairId);
+              this.detach(next, asset);
               for (const analytic of next.state.data.analyticRecords || []) analytic.digitalAssetIds = (analytic.digitalAssetIds || []).filter(a => a !== id);
               asset.sys = sys;
               asset.sortOrder = Math.max(-1, ...Object.values(next.assets).filter(a => a.sys === sys && a.id !== id).map(a => a.sortOrder)) + 1;

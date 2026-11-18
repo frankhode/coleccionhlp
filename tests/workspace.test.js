@@ -129,3 +129,43 @@ test('an intervening branch update leaves the local draft and files intact', asy
   assert.equal(workspace.value.dirty, true);
   assert.equal(workspace.value.baseCommit, 'a'.repeat(40));
 });
+
+
+test('mixed upload review stores ordered other groups and counts a front once', async () => {
+  const { workspace, api } = setup();
+  for (const id of 'abcdefghi') workspace.value.assets[id] = { id, sys:'001', path:id+'.webp', sortOrder:id.charCodeAt(0), createdAt:'2026-01-01' };
+  const group = groups => api.handle(route('digitals'), {method:'PATCH',body:JSON.stringify({sys:'001',groups})});
+  const others = {kind:'other',ids:['c','b','a']};
+  for (const bad of [{kind:'other',ids:['d']}, {kind:'other',ids:['d','c']}, {kind:'stereo',ids:['d','e']}]) {
+    assert.equal((await group([others,bad])).status,400);
+    assert.ok(Object.values(workspace.value.assets).every(asset=>!asset.pairId));
+  }
+  assert.equal((await group([others,{kind:'pairs',ids:['d','e']},{kind:'stereo',ids:['f','g','h']}])).status,200);
+  const {assets} = workspace.value;
+  assert.deepEqual(others.ids.map(id=>[assets[id].face,assets[id].groupOrder]),[['other-front',0],['other-detail',1],['other-detail',2]]);
+  const summary = async () => (await (await api.handle(new URL('https://example.test/api/digitals?summary=1'))).json()).summaries['001'];
+  const result = await summary();
+  assert.equal(result.objectCount,4);
+  assert.equal(result.count,9);
+  assert.deepEqual(result.previews.map(asset=>asset.id),['c','d','f']);
+  await api.handle(route('digitals/b'),{method:'DELETE'});
+  assert.ok(workspace.value.assets.c.pairId);
+  assert.equal(workspace.value.assets.c.pairId,workspace.value.assets.a.pairId);
+  await api.handle(route('digitals/c'),{method:'PATCH',body:JSON.stringify({unpair:true})});
+  assert.equal(workspace.value.assets.a.face,'');
+  assert.equal(workspace.value.assets.a.groupOrder,undefined);
+  assert.equal((await summary()).objectCount,5);
+});
+
+test('draft recovery can advance across an interface update only for an identical catalog', async () => {
+  const github = new GitHub('test');
+  const trees = {old:[{path:'data',type:'tree',sha:'data-A'},{path:'images',type:'tree',sha:'images-A'}]};
+  trees.new = [...trees.old,{path:'assets',type:'tree',sha:'code-B'}];
+  github.request = async path => path.includes('/commits/')
+    ? {tree:{sha:path.split('/').pop()}} : {tree:trees[path.split('/').pop()]};
+  assert.equal(await github.sameCatalog('old','new'),true);
+  trees.new = [trees.old[0]];
+  assert.equal(await github.sameCatalog('old','new'),false);
+  trees.new = [{path:'data',type:'tree',sha:'data-B'},trees.old[1]];
+  assert.equal(await github.sameCatalog('old','new'),false);
+});

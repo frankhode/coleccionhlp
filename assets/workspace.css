@@ -41,3 +41,9 @@
 .count-label-editor input:not([type=checkbox]) { display:block; max-width:100%; width:11rem; padding:.35rem; }
 .count-label-editor button + button { margin-left:.4rem; }
 .aleph-result-digitals strong { white-space:normal; overflow-wrap:anywhere; }
+.grouping-review { z-index:1500; }
+.grouping-review .digital-bulk-pair-dialog { overflow-y:auto; }
+.grouping-review .review-group { display:flex; flex-wrap:wrap; align-items:center; gap:.6rem; padding:.5rem; border-bottom:1px solid #d7d1c5; }
+.grouping-review .review-group .digital-bulk-pair-face { width:100px; }
+.grouping-review .digital-bulk-unassigned > button { margin-top:.5rem; }
+.digital-viewer-bar select { max-width:12rem; padding:.25rem; color:#233c35; background:#faf8f2; }
