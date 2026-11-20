@@ -172,7 +172,7 @@ export function createGallery(React, ReactDOM) {
           'Ver ficha bibliográfica')))), document.body);
   }
 
-  return function Gallery({ records, analytics, filters, version, onRelated, onRecord, onClear }) {
+  return function Gallery({ records, analytics, filters, version, onRelated, onRecord, onClear, gallerySize = 'medium' }) {
     const [assets, setAssets] = useState(null), [error, setError] = useState('');
     const [attempt, setAttempt] = useState(0), [selected, setSelected] = useState(null);
     const [limit, setLimit] = useState(120);
@@ -201,7 +201,7 @@ export function createGallery(React, ReactDOM) {
     return h(React.Fragment, null,
       h('p', { className: 'hlp-gallery-count', role: 'status' },
         `${entries.length} ${entries.length === 1 ? 'imagen' : 'imágenes'} · ${recordCount} ${recordCount === 1 ? 'registro' : 'registros'}`),
-      h('div', { className: 'hlp-gallery-grid', 'aria-label': 'Galería de imágenes' },
+      h('div', { className: 'hlp-gallery-grid', 'data-size': gallerySize, 'aria-label': 'Galería de imágenes' },
         entries.slice(0, limit).map(item => h('button', { key: item.asset.id, type: 'button',
           className: 'hlp-gallery-tile', 'aria-label': item.title, onClick: () => setSelected(item.asset.id) },
         h(Photograph, { image: item.asset, title: '' }), h('span', { className: 'hlp-gallery-title' }, item.title)))),

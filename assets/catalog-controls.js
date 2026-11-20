@@ -33,7 +33,7 @@ export function createCatalogControls(React) {
   const { useState, useEffect, useRef } = React;
   return function CatalogControls({ query, onQuery, active, onClear, sort, direction, onSort, onDirection,
     groups, termSort, onTermSort, from, to, onFrom, onTo, gallery, imageMode, onImageMode,
-    includeAnalytics, onIncludeAnalytics, view }) {
+    includeAnalytics, onIncludeAnalytics, view, gallerySize, onGallerySize }) {
     const [open, setOpen] = useState(null), [expanded, setExpanded] = useState(null);
     const controls = useRef(null);
     useEffect(() => { setOpen(null); setExpanded(null); }, [view]);
@@ -71,6 +71,11 @@ export function createCatalogControls(React) {
           value: query, placeholder: 'Buscar…', onChange: event => onQuery(event.target.value) }),
         active && h('button', { type: 'button', className: 'hlp-clear-search', onClick: onClear,
           'aria-label': 'Limpiar búsqueda y filtros', title: 'Limpiar búsqueda y filtros' }, '×')),
+      gallery && h('label', { className: 'hlp-gallery-size' }, h('span', null, 'Tamaño'),
+        h('select', { value: gallerySize, 'aria-label': 'Tamaño de las imágenes',
+          onChange: event => onGallerySize(event.target.value) },
+        [['small', 'Pequeñas'], ['medium', 'Medianas'], ['large', 'Grandes'], ['xlarge', 'Muy grandes']]
+          .map(([value, label]) => h('option', { key: value, value }, label)))),
       popover('sort', 'Ordenar', [
         select('Campo', sort, onSort, [['title', 'Título'], ['author', 'Autor'], ['date', 'Fecha']]),
         select('Sentido', direction, onDirection, [['asc', 'Ascendente'], ['desc', 'Descendente']]),

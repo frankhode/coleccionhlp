@@ -9,6 +9,8 @@
 .hlp-clear-search{position:absolute;top:3px;right:3px;width:32px;height:32px;padding:0;border:0;border-radius:4px;background:transparent;color:#637268;font-size:22px;cursor:pointer}
 .hlp-clear-search:hover{background:#e5ece7}
 .hlp-control-menu{position:relative;flex:0 0 auto}
+.hlp-gallery-size{display:flex;flex:0 0 auto;align-items:center;gap:7px;color:#657167;font-size:.875rem}
+.hlp-gallery-size select{box-sizing:border-box;max-width:140px;min-height:39px;padding:8px 10px;border:1px solid #bdb8ab;border-radius:5px;background:#f6f3ec;color:#354e40;font:inherit;cursor:pointer}
 .hlp-control-toggle{display:flex;align-items:center;justify-content:center;gap:8px;min-height:39px;padding:8px 13px;border:1px solid #bdb8ab;border-radius:5px;background:#f6f3ec;color:#354e40;font:inherit;cursor:pointer}
 .hlp-control-toggle[aria-expanded=true]{border-color:#315f4b;background:#315f4b;color:#fff}
 .hlp-control-indicator{padding:2px 5px;border-radius:3px;background:#dce8de;color:#315647;font-size:.75rem}
