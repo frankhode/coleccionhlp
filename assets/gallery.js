@@ -62,10 +62,18 @@ export function filterGalleryEntries(entries, filters = {}) {
 }
 
 export function relatedTerms(entry) {
-  const { record, analytic } = entry;
+  const description = entry.analytic || entry.record;
   return {
-    subjects: unique([...(analytic?.subjects || []), ...(record.access || [])].map(cleanTerm)),
-    genres: unique([...(analytic?.genres || []), ...(record.genres || [])]),
+    subjects: unique((description.subjects || description.access || []).map(cleanTerm)),
+    genres: unique(description.genres || []),
+  };
+}
+
+export function imageBibliography(entry) {
+  const description = entry.analytic || entry.record;
+  return {
+    author: description.author || '', date: description.date || '', physical: description.physical || '',
+    notes: typeof description.notes === 'string' ? description.notes : '',
   };
 }
 
@@ -100,8 +108,7 @@ export function createGallery(React, ReactDOM) {
     const [face, setFace] = useState(entry.asset.id), [zoomed, setZoomed] = useState(false);
     const image = entry.images.find(item => item.id === face) || entry.asset;
     const { record, analytic } = entry;
-    const author = analytic?.author || record.author;
-    const date = analytic?.date || record.date;
+    const { author, date, physical, notes } = imageBibliography(entry);
     const terms = relatedTerms(entry);
     useEffect(() => { setFace(entry.asset.id); setZoomed(false); }, [entry.asset.id]);
     useEffect(() => {
@@ -150,7 +157,8 @@ export function createGallery(React, ReactDOM) {
         author && h('button', { type: 'button', className: 'hlp-image-author',
           onClick: () => related('author', author) }, author),
         date && h('p', { className: 'hlp-image-date' }, date),
-        record.physical && h('p', { className: 'hlp-image-physical' }, record.physical),
+        physical && h('p', { className: 'hlp-image-physical' }, physical),
+        notes && h('p', { className: 'hlp-image-notes' }, notes),
         (terms.subjects.length > 0 || terms.genres.length > 0) && h('section', { className: 'hlp-image-related' },
           h('h3', null, 'Seguir explorando'),
           h('div', null,
@@ -158,8 +166,9 @@ export function createGallery(React, ReactDOM) {
               onClick: () => related('subject', term) }, term)),
             terms.genres.map(term => h('button', { key: `genre:${term}`, type: 'button',
               className: 'genre', onClick: () => related('genre', term) }, term)))),
-        analytic && h('p', { className: 'hlp-image-parent' }, 'En ', record.title),
-        h('button', { type: 'button', className: 'hlp-image-bibliography', onClick: () => onRecord(record.sys) },
+        analytic && h('p', { className: 'hlp-image-parent' }, 'En: ',
+          h('button', { type: 'button', onClick: () => onRecord(record.sys) }, record.title)),
+        !analytic && h('button', { type: 'button', className: 'hlp-image-bibliography', onClick: () => onRecord(record.sys) },
           'Ver ficha bibliográfica')))), document.body);
   }
 

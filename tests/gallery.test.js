@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { galleryEntries, filterGalleryEntries, relatedTerms } from '../assets/gallery.js';
+import { galleryEntries, filterGalleryEntries, relatedTerms, imageBibliography } from '../assets/gallery.js';
 
 const record = { sys: '001', title: 'Conjunto de vistas', author: 'Estudio', date: '1900',
   access: ['Argentina Fotografías'], genres: ['Copias a la albúmina'] };
@@ -29,7 +29,19 @@ test('only published descriptions supply image titles, including links saved on 
   const entries = galleryEntries([{ record }], assets, analytics);
   assert.equal(entries[0].title, 'Vista del río');
   assert.equal(entries[1].title, 'Conjunto de vistas');
-  assert.deepEqual(relatedTerms(entries[0]).subjects, ['Ríos', 'Argentina']);
+  assert.deepEqual(relatedTerms(entries[0]).subjects, ['Ríos']);
+});
+
+test('an analytic never borrows descriptive fields or thematic links from its parent', () => {
+  const parent = { ...record, physical: '8 fotografías', notes: ['Nota del conjunto'] };
+  const entry = { record: parent, analytic: { title: 'Panadero', author: '', date: '', subjects: ['Panaderos'] } };
+  assert.deepEqual(imageBibliography(entry), { author: '', date: '', physical: '', notes: '' });
+  assert.deepEqual(relatedTerms(entry), { subjects: ['Panaderos'], genres: [] });
+  entry.analytic = { ...entry.analytic, author: 'Autora de la imagen', date: '1895', physical: '1 fotografía', notes: 'Nota propia' };
+  assert.deepEqual(imageBibliography(entry), { author: 'Autora de la imagen', date: '1895', physical: '1 fotografía', notes: 'Nota propia' });
+  delete entry.analytic;
+  assert.equal(imageBibliography(entry).physical, '8 fotografías');
+  assert.deepEqual(relatedTerms(entry).subjects, ['Argentina']);
 });
 
 test('search and thematic links narrow to the matching image inside a set', () => {
