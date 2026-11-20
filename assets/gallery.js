@@ -181,6 +181,7 @@ export function createGallery(React, ReactDOM) {
       [records, assets, analytics, filters.query, filters.author, filters.subject, filters.genre, filters.from, filters.to]);
     useEffect(() => { setLimit(120); }, [records]);
     const index = entries.findIndex(entry => entry.asset.id === selected), entry = entries[index];
+    const recordCount = new Set(entries.map(item => item.record.sys)).size;
     const navigate = delta => { if (entries[index + delta]) setSelected(entries[index + delta].asset.id); };
     if (error) return h('div', { className: 'aleph-empty', role: 'alert' }, h('p', null, error),
       h('button', { type: 'button', onClick: () => setAttempt(value => value + 1) }, 'Reintentar'));
@@ -190,7 +191,7 @@ export function createGallery(React, ReactDOM) {
       h('button', { type: 'button', onClick: onClear }, 'Limpiar filtros'));
     return h(React.Fragment, null,
       h('p', { className: 'hlp-gallery-count', role: 'status' },
-        `${entries.length} ${entries.length === 1 ? 'imagen' : 'imágenes'} · ${new Set(entries.map(item => item.record.sys)).size} ${new Set(entries.map(item => item.record.sys)).size === 1 ? 'registro' : 'registros'}`),
+        `${entries.length} ${entries.length === 1 ? 'imagen' : 'imágenes'} · ${recordCount} ${recordCount === 1 ? 'registro' : 'registros'}`),
       h('div', { className: 'hlp-gallery-grid', 'aria-label': 'Galería de imágenes' },
         entries.slice(0, limit).map(item => h('button', { key: item.asset.id, type: 'button',
           className: 'hlp-gallery-tile', 'aria-label': item.title, onClick: () => setSelected(item.asset.id) },
