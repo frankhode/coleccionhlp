@@ -104,13 +104,21 @@ export function createGallery(React, ReactDOM) {
   }
 
   function ImageCard({ entry, index, total, onClose, onNavigate, onRelated, onRecord }) {
-    const dialog = useRef(null);
+    const dialog = useRef(null), menuButton = useRef(null), swipe = useRef(null);
     const [face, setFace] = useState(entry.asset.id), [zoomed, setZoomed] = useState(false);
+    const [mobile, setMobile] = useState(() => window.matchMedia('(max-width: 760px)').matches);
+    const [menuOpen, setMenuOpen] = useState(false);
     const image = entry.images.find(item => item.id === face) || entry.asset;
     const { record, analytic } = entry;
     const { author, date, physical, notes } = imageBibliography(entry);
     const terms = relatedTerms(entry);
-    useEffect(() => { setFace(entry.asset.id); setZoomed(false); }, [entry.asset.id]);
+    useEffect(() => {
+      const media = window.matchMedia('(max-width: 760px)');
+      const update = () => { setMobile(media.matches); setMenuOpen(false); };
+      media.addEventListener('change', update);
+      return () => media.removeEventListener('change', update);
+    }, []);
+    useEffect(() => { setFace(entry.asset.id); setZoomed(false); setMenuOpen(false); }, [entry.asset.id]);
     useEffect(() => {
       const previousFocus = document.activeElement, previousOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
@@ -120,56 +128,87 @@ export function createGallery(React, ReactDOM) {
         if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
       };
     }, []);
+    useEffect(() => {
+      if (menuOpen) dialog.current?.querySelector('.hlp-mobile-menu-close')?.focus({ preventScroll: true });
+    }, [menuOpen]);
+    const closeMenu = () => { setMenuOpen(false); menuButton.current?.focus({ preventScroll: true }); };
+    const navigate = delta => { setMenuOpen(false); onNavigate(delta); };
     const related = (kind, term) => onRelated(kind, term, record, !!analytic);
+    const tools = h(React.Fragment, null,
+      h('div', { className: 'hlp-image-controls' },
+        h('button', { type: 'button', disabled: index === 0, onClick: () => navigate(-1),
+          'aria-label': 'Imagen anterior' }, 'Anterior'),
+        h('span', { 'aria-live': 'polite' }, `${index + 1} / ${total}`),
+        h('button', { type: 'button', 'aria-pressed': zoomed,
+          onClick: () => { setZoomed(value => !value); setMenuOpen(false); } }, zoomed ? 'Ajustar' : 'Ampliar'),
+        h('button', { type: 'button', disabled: index === total - 1, onClick: () => navigate(1),
+          'aria-label': 'Imagen siguiente' }, 'Siguiente')),
+      entry.images.length > 1 && h('div', { className: 'hlp-image-faces', 'aria-label': 'Vistas de la pieza' },
+        entry.images.map((item, position) => h('button', { key: item.id, type: 'button',
+          'aria-pressed': item.id === image.id,
+          onClick: () => { setFace(item.id); setZoomed(false); setMenuOpen(false); } },
+        h(Photograph, { image: item, title: '' }),
+        h('span', null, faceNames[item.face] || `Imagen ${position + 1}`)))));
+    const information = h('aside', { className: 'hlp-image-information' },
+      h('h2', { id: 'hlp-image-title' }, entry.title),
+      author && h('button', { type: 'button', className: 'hlp-image-author',
+        onClick: () => related('author', author) }, author),
+      date && h('p', { className: 'hlp-image-date' }, date),
+      physical && h('p', { className: 'hlp-image-physical' }, physical),
+      notes && h('p', { className: 'hlp-image-notes' }, notes),
+      (terms.subjects.length > 0 || terms.genres.length > 0) && h('section', { className: 'hlp-image-related' },
+        h('h3', null, 'Seguir explorando'),
+        h('div', null,
+          terms.subjects.map(term => h('button', { key: `subject:${term}`, type: 'button',
+            onClick: () => related('subject', term) }, term)),
+          terms.genres.map(term => h('button', { key: `genre:${term}`, type: 'button',
+            className: 'genre', onClick: () => related('genre', term) }, term)))),
+      analytic && h('p', { className: 'hlp-image-parent' }, 'En: ',
+        h('button', { type: 'button', onClick: () => onRecord(record.sys) }, record.title)),
+      !analytic && h('button', { type: 'button', className: 'hlp-image-bibliography', onClick: () => onRecord(record.sys) },
+        'Ver ficha bibliográfica'));
     return ReactDOM.createPortal(h('dialog', {
-      className: 'hlp-image-card', ref: dialog, 'aria-labelledby': 'hlp-image-title',
-      onCancel: event => { event.preventDefault(); onClose(); },
+      className: 'hlp-image-card', ref: dialog,
+      'aria-labelledby': mobile ? undefined : 'hlp-image-title', 'aria-label': mobile ? entry.title : undefined,
+      onCancel: event => { event.preventDefault(); if (mobile && menuOpen) closeMenu(); else onClose(); },
       onClick: event => { if (event.target === event.currentTarget) onClose(); },
       onKeyDown: event => {
         if (event.target.closest('input, select, textarea')) return;
         if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-          event.preventDefault(); onNavigate(event.key === 'ArrowLeft' ? -1 : 1);
+          event.preventDefault(); navigate(event.key === 'ArrowLeft' ? -1 : 1);
         }
       },
     }, h('div', { className: 'hlp-image-card-layout' },
       h('button', { type: 'button', className: 'hlp-image-close', onClick: onClose,
         'aria-label': 'Cerrar imagen', autoFocus: true }, '×'),
+      mobile && h('button', { type: 'button', className: 'hlp-image-mobile-menu-button', ref: menuButton,
+        'aria-label': 'Opciones de imagen y datos', 'aria-expanded': menuOpen,
+        'aria-controls': 'hlp-mobile-image-menu', onClick: () => menuOpen ? closeMenu() : setMenuOpen(true) }, 'Menú'),
       h('section', { className: 'hlp-image-presentation', 'aria-label': 'Imagen y vistas vinculadas' },
         h('div', { className: `hlp-image-stage ${zoomed ? 'is-zoomed' : ''}`, tabIndex: 0,
-          'aria-label': 'Imagen. Usá las flechas del teclado para recorrer los resultados.' },
-          h(Photograph, { key: image.id, image, title: entry.title, large: true, zoomed })),
-        h('div', { className: 'hlp-image-controls' },
-          h('button', { type: 'button', disabled: index === 0, onClick: () => onNavigate(-1),
-            'aria-label': 'Imagen anterior' }, 'Anterior'),
-          h('span', { 'aria-live': 'polite' }, `${index + 1} / ${total}`),
-          h('button', { type: 'button', 'aria-pressed': zoomed, onClick: () => setZoomed(value => !value) },
-            zoomed ? 'Ajustar' : 'Ampliar'),
-          h('button', { type: 'button', disabled: index === total - 1, onClick: () => onNavigate(1),
-            'aria-label': 'Imagen siguiente' }, 'Siguiente')),
-        entry.images.length > 1 && h('div', { className: 'hlp-image-faces', 'aria-label': 'Vistas de la pieza' },
-          entry.images.map((item, position) => h('button', { key: item.id, type: 'button',
-            'aria-pressed': item.id === image.id,
-            onClick: () => { setFace(item.id); setZoomed(false); } },
-          h(Photograph, { image: item, title: '' }),
-          h('span', null, faceNames[item.face] || `Imagen ${position + 1}`))))),
-      h('aside', { className: 'hlp-image-information' },
-        h('h2', { id: 'hlp-image-title' }, entry.title),
-        author && h('button', { type: 'button', className: 'hlp-image-author',
-          onClick: () => related('author', author) }, author),
-        date && h('p', { className: 'hlp-image-date' }, date),
-        physical && h('p', { className: 'hlp-image-physical' }, physical),
-        notes && h('p', { className: 'hlp-image-notes' }, notes),
-        (terms.subjects.length > 0 || terms.genres.length > 0) && h('section', { className: 'hlp-image-related' },
-          h('h3', null, 'Seguir explorando'),
-          h('div', null,
-            terms.subjects.map(term => h('button', { key: `subject:${term}`, type: 'button',
-              onClick: () => related('subject', term) }, term)),
-            terms.genres.map(term => h('button', { key: `genre:${term}`, type: 'button',
-              className: 'genre', onClick: () => related('genre', term) }, term)))),
-        analytic && h('p', { className: 'hlp-image-parent' }, 'En: ',
-          h('button', { type: 'button', onClick: () => onRecord(record.sys) }, record.title)),
-        !analytic && h('button', { type: 'button', className: 'hlp-image-bibliography', onClick: () => onRecord(record.sys) },
-          'Ver ficha bibliográfica')))), document.body);
+          'aria-label': mobile ? 'Imagen. Deslizá hacia los lados para recorrer los resultados.' : 'Imagen. Usá las flechas del teclado para recorrer los resultados.',
+          onTouchStart: event => {
+            swipe.current = mobile && !zoomed && event.touches.length === 1
+              ? { x: event.touches[0].clientX, y: event.touches[0].clientY, time: Date.now() } : null;
+          },
+          onTouchMove: event => { if (event.touches.length !== 1) swipe.current = null; },
+          onTouchCancel: () => { swipe.current = null; },
+          onTouchEnd: event => {
+            const start = swipe.current; swipe.current = null;
+            if (!start || !mobile || zoomed || menuOpen || event.touches.length || !event.changedTouches.length) return;
+            const touch = event.changedTouches[0], dx = touch.clientX - start.x, dy = touch.clientY - start.y;
+            if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && Date.now() - start.time < 800) navigate(dx < 0 ? 1 : -1);
+          },
+        }, h(Photograph, { key: image.id, image, title: entry.title, large: true, zoomed })),
+        !mobile && tools),
+      !mobile && information,
+      mobile && menuOpen && h(React.Fragment, null,
+        h('div', { className: 'hlp-mobile-menu-scrim', onClick: closeMenu, 'aria-hidden': true }),
+        h('section', { id: 'hlp-mobile-image-menu', className: 'hlp-mobile-image-menu', role: 'region',
+          'aria-label': 'Opciones de imagen y datos' },
+        h('header', { className: 'hlp-mobile-menu-heading' }, h('strong', null, 'Imagen y datos'),
+          h('button', { type: 'button', className: 'hlp-mobile-menu-close', onClick: closeMenu, 'aria-label': 'Cerrar menú de imagen' }, '×')),
+        h('div', { className: 'hlp-mobile-menu-content' }, tools, information))))), document.body);
   }
 
   return function Gallery({ records, analytics, filters, version, onRelated, onRecord, onClear, gallerySize = 'medium' }) {

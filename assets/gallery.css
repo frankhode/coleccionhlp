@@ -50,5 +50,31 @@
 .hlp-image-related button:hover,.hlp-image-related button:focus-visible{outline:1px solid currentColor;outline-offset:1px}
 .hlp-image-bibliography{margin-top:24px;padding:0;border:0;background:transparent;color:#315f4b;font-size:.85rem;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 @media(min-width:1550px){.hlp-gallery-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}}
-@media(max-width:760px){.hlp-gallery-grid{grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:8px}.hlp-gallery .aleph-searchbar{flex-direction:row;max-width:none}.hlp-image-card{width:96vw;max-width:96vw;height:94dvh;max-height:94dvh}.hlp-image-card-layout{grid-template-columns:1fr;grid-template-rows:minmax(0,60%) minmax(0,40%)}.hlp-image-information{padding:20px}.hlp-image-information h2{font-size:1.2rem;margin-bottom:10px}.hlp-image-close{background:#fbfaf6ed}.hlp-image-stage{padding:12px}.hlp-image-controls{gap:6px;padding:7px}.hlp-image-faces{max-height:92px;padding-bottom:7px}.hlp-image-faces button{flex-basis:65px}.hlp-image-faces img{height:36px}.hlp-image-related{margin-top:18px}.hlp-image-parent,.hlp-image-physical{margin:12px 0}}
+.hlp-image-mobile-menu-button,.hlp-mobile-image-menu,.hlp-mobile-menu-scrim{display:none}
+@media(max-width:760px){
+ .hlp-gallery-grid{grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:8px}
+ .hlp-gallery .aleph-searchbar{flex-direction:row;max-width:none}
+ .hlp-image-card{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;margin:0;border-radius:0;background:#19251f;box-shadow:none}
+ .hlp-image-card-layout{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+ .hlp-image-presentation{width:100%;height:100%}
+ .hlp-image-stage{padding:calc(env(safe-area-inset-top,0px) + 54px) 6px max(8px,env(safe-area-inset-bottom,0px));touch-action:pan-y pinch-zoom}
+ .hlp-image-stage.is-zoomed{padding:0;touch-action:auto}
+ .hlp-image-close{top:calc(env(safe-area-inset-top,0px) + 8px);right:10px;width:42px;height:42px;background:#fbfaf6e8}
+ .hlp-image-mobile-menu-button{position:absolute;z-index:2;top:calc(env(safe-area-inset-top,0px) + 8px);left:10px;display:block;min-height:42px;padding:9px 15px;border:1px solid #ffffff45;border-radius:22px;background:#19251fde;color:#fff;font:500 .95rem/1.4 Arial,sans-serif;cursor:pointer}
+ .hlp-mobile-menu-scrim{position:absolute;z-index:3;inset:0;display:block;background:#09120d70}
+ .hlp-mobile-image-menu{position:absolute;z-index:4;inset:auto 0 0;display:flex;flex-direction:column;max-height:78dvh;border-radius:15px 15px 0 0;background:#fbfaf6;color:#30483c;box-shadow:0 -12px 45px #0005;overflow:hidden}
+ .hlp-mobile-menu-heading{display:flex;flex:0 0 auto;align-items:center;justify-content:space-between;padding:10px 14px 10px 20px;border-bottom:1px solid #ddd8cd;font-size:.95rem}
+ .hlp-mobile-menu-close{width:40px;height:40px;padding:0;border:0;border-radius:50%;background:#e8e6de;color:#315f4b;font:26px/1 Arial,sans-serif;cursor:pointer}
+ .hlp-mobile-menu-content{min-height:0;padding-bottom:env(safe-area-inset-bottom,0px);overflow-y:auto;overscroll-behavior:contain}
+ .hlp-mobile-image-menu .hlp-image-controls{gap:8px;padding:14px 10px;border:0;background:#23392f}
+ .hlp-mobile-image-menu .hlp-image-controls button{min-height:42px;padding:9px 12px;font-size:.9rem}
+ .hlp-mobile-image-menu .hlp-image-faces{justify-content:flex-start;max-height:none;gap:10px;padding:0 14px 14px;background:#23392f;overflow-x:auto}
+ .hlp-mobile-image-menu .hlp-image-faces button{flex-basis:88px;min-height:96px;font-size:.85rem}
+ .hlp-mobile-image-menu .hlp-image-faces img{height:62px}
+ .hlp-mobile-image-menu .hlp-image-information{padding:22px 20px;overflow:visible}
+ .hlp-mobile-image-menu .hlp-image-information h2{font-size:1.25rem;margin-bottom:14px}
+ .hlp-mobile-image-menu .hlp-image-related{margin-top:18px}
+ .hlp-mobile-image-menu .hlp-image-related button{min-height:40px}
+ .hlp-image-parent,.hlp-image-physical{margin:12px 0}
+}
 @media(prefers-reduced-motion:reduce){.hlp-gallery-tile img,.hlp-gallery-title{transition:none}}
