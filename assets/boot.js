@@ -1,5 +1,5 @@
 import { config } from './config.js';
-import { createGallery } from './gallery.js';
+import { createGallery } from './gallery.js?v=20261120-gallery';
 import { openDatabase, WorkspaceStore, Workspace, createWorkspace, exclusive, ConflictError } from './store.js';
 import { GitHub } from './github.js';
 import { LocalImages } from './images.js';
@@ -158,7 +158,7 @@ async function mount() {
   window.HLP_PUBLIC = !admin;
   window.HLP_CREATE_GALLERY = createGallery;
   window.HLP_LOCAL_IMAGE = image => localImages.url(api.value.assets[image.id] || image);
-  const script = document.createElement('script'); script.src = new URL('assets/legacy.js', baseURL);
+  const script = document.createElement('script'); script.src = new URL('assets/legacy.js?v=20261120-gallery', baseURL);
   script.onload = () => window.HLP_MOUNT();
   script.onerror = () => say('No se pudo cargar la interfaz. Recargá la página.');
   document.body.append(script);
